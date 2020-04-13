@@ -63,7 +63,7 @@ def extract_mean_std_features(ecg_data, label=0, block = 700):
             std_features[idx] = np.std(temp)
             min_features[idx] = np.amin(temp)
             max_features[idx] = np.amax(temp)
-        i += 700
+        i += block
         idx += 1
     #print(len(mean_features), len(std_features))
     #print(mean_features, std_features)
@@ -74,22 +74,23 @@ def extract_mean_std_features(ecg_data, label=0, block = 700):
 
 def extract_one(chest_data_dict, idx, l_condition=0):
     ecg_data = chest_data_dict["ECG"][idx].flatten()
-    ecg_features = extract_mean_std_features(ecg_data, label=l_condition)
+    # ecg_features = extract_mean_std_features(ecg_data, label=l_condition)
     #print(ecg_features.shape)
 
     eda_data = chest_data_dict["EDA"][idx].flatten()
-    eda_features = extract_mean_std_features(eda_data, label=l_condition)
+    # eda_features = extract_mean_std_features(eda_data, label=l_condition)
     #print(eda_features.shape)
 
-    emg_data = chest_data_dict["EMG"][idx].flatten()
-    emg_features = extract_mean_std_features(emg_data, label=l_condition)
+    # emg_data = chest_data_dict["EMG"][idx].flatten()
+    # emg_features = extract_mean_std_features(emg_data, label=l_condition)
     #print(emg_features.shape)
 
-    temp_data = chest_data_dict["Temp"][idx].flatten()
-    temp_features = extract_mean_std_features(temp_data, label=l_condition)
+    # temp_data = chest_data_dict["Temp"][idx].flatten()
+    # temp_features = extract_mean_std_features(temp_data, label=l_condition)
     #print(temp_features.shape)
 
-    baseline_data = np.hstack((eda_features, temp_features, ecg_features, emg_features))
+    # baseline_data = np.hstack((eda_features, temp_features, ecg_features, emg_features))
+    baseline_data = np.column_stack((eda_data, ecg_data))
     #print(len(baseline_data))
     label_array = np.full(len(baseline_data), l_condition)
     #print(label_array.shape)
@@ -105,13 +106,14 @@ def recur_print(ecg):
             recur_print(ecg[k])
 
 def execute():
-    data_set_path = "/media/jac/New Volume/Datasets/WESAD"
+    data_set_path = "/home/fedeparg/stress_affect_detection/WESAD"
     file_path = "ecg.txt"
     subject = 'S3'
     obj_data = {}
     labels = {}
     all_data = {}
-    subs = [2, 3, 4, 5, 6]
+    # subs = [2, 3, 4, 5, 6, 7, 8, 9 , 10 ,11, 13, 14, 15, 16]
+    subs = [2]
     for i in subs:
         subject = 'S' + str(i)
         print("Reading data", subject)
@@ -136,12 +138,15 @@ def execute():
         # Do for each subject
         baseline = np.asarray([idx for idx, val in enumerate(labels[subject]) if val == 1])
         # print("Baseline:", chest_data_dict['ECG'][baseline].shape)
+        # print("Baseline")
         # print(baseline.shape)
 
         stress = np.asarray([idx for idx, val in enumerate(labels[subject]) if val == 2])
+        # print("Stress")
         # print(stress.shape)
 
         amusement = np.asarray([idx for idx, val in enumerate(labels[subject]) if val == 3])
+        # print("Amusement")
         # print(amusement.shape)
 
         baseline_data = extract_one(chest_data_dict, baseline, l_condition=1)
@@ -154,11 +159,12 @@ def execute():
 
     i = 0
     for k, v in all_data.items():
+        print(all_data[k].shape)
         if i == 0:
             data = all_data[k]
             i += 1
-        print(all_data[k].shape)
-        data = np.vstack((data, all_data[k]))
+        else:
+            data = np.vstack((data, all_data[k]))
 
     print(data.shape)
     return data
