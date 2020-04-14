@@ -6,6 +6,7 @@ import neurokit as nk
 import seaborn as sns
 import pandas as pd
 
+
 def load_data(path, subject):
     """Given path and subject, load the data of the subject"""
     os.chdir(path)
@@ -14,8 +15,10 @@ def load_data(path, subject):
         data = pickle.load(file, encoding='latin1')
     return data
 
+
 class read_data_one_subject:
     """Read data from WESAD dataset"""
+
     def __init__(self, path, subject):
         self.keys = ['label', 'subject', 'signal']
         self.signal_keys = ['wrist', 'chest']
@@ -46,7 +49,8 @@ class read_data_one_subject:
         chest_data = signal[self.signal_keys[1]]
         return chest_data
 
-def extract_mean_std_features(ecg_data, label=0, block = 700):
+
+def extract_mean_std_features(ecg_data, label=0, block=700):
     #print (len(ecg_data))
     i = 0
     mean_features = np.empty(int(len(ecg_data)/block), dtype=np.float64)
@@ -57,7 +61,7 @@ def extract_mean_std_features(ecg_data, label=0, block = 700):
     idx = 0
     while i < len(ecg_data):
         temp = ecg_data[i:i+block]
-        #print(len(temp))
+        # print(len(temp))
         if idx < int(len(ecg_data)/block):
             mean_features[idx] = np.mean(temp)
             std_features[idx] = np.std(temp)
@@ -67,37 +71,41 @@ def extract_mean_std_features(ecg_data, label=0, block = 700):
         idx += 1
     #print(len(mean_features), len(std_features))
     #print(mean_features, std_features)
-    features = {'mean':mean_features, 'std':std_features, 'min':min_features, 'max':max_features}
+    features = {'mean': mean_features, 'std': std_features,
+                'min': min_features, 'max': max_features}
 
-    one_set = np.column_stack((mean_features, std_features, min_features, max_features))
+    one_set = np.column_stack(
+        (mean_features, std_features, min_features, max_features))
     return one_set
+
 
 def extract_one(chest_data_dict, idx, l_condition=0):
     ecg_data = chest_data_dict["ECG"][idx].flatten()
     # ecg_features = extract_mean_std_features(ecg_data, label=l_condition)
-    #print(ecg_features.shape)
+    # print(ecg_features.shape)
 
     eda_data = chest_data_dict["EDA"][idx].flatten()
     # eda_features = extract_mean_std_features(eda_data, label=l_condition)
-    #print(eda_features.shape)
+    # print(eda_features.shape)
 
     # emg_data = chest_data_dict["EMG"][idx].flatten()
     # emg_features = extract_mean_std_features(emg_data, label=l_condition)
-    #print(emg_features.shape)
+    # print(emg_features.shape)
 
     # temp_data = chest_data_dict["Temp"][idx].flatten()
     # temp_features = extract_mean_std_features(temp_data, label=l_condition)
-    #print(temp_features.shape)
+    # print(temp_features.shape)
 
     # baseline_data = np.hstack((eda_features, temp_features, ecg_features, emg_features))
     baseline_data = np.column_stack((eda_data, ecg_data))
-    #print(len(baseline_data))
+    # print(len(baseline_data))
     label_array = np.full(len(baseline_data), l_condition)
-    #print(label_array.shape)
-    #print(baseline_data.shape)
+    # print(label_array.shape)
+    # print(baseline_data.shape)
     baseline_data = np.column_stack((baseline_data, label_array))
-    #print(baseline_data.shape)
+    # print(baseline_data.shape)
     return baseline_data
+
 
 def recur_print(ecg):
     while ecg is dict:
@@ -105,15 +113,16 @@ def recur_print(ecg):
         for k in ecg.keys():
             recur_print(ecg[k])
 
+
 def execute():
-    data_set_path = "/home/fedeparg/stress_affect_detection/WESAD"
+    data_set_path = "/home/fedeparg/Stress-detection/WESAD"
     file_path = "ecg.txt"
     subject = 'S3'
     obj_data = {}
     labels = {}
     all_data = {}
-    # subs = [2, 3, 4, 5, 6, 7, 8, 9 , 10 ,11, 13, 14, 15, 16]
-    subs = [2]
+    subs = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14]
+    # subs = [2, 3]
     for i in subs:
         subject = 'S' + str(i)
         print("Reading data", subject)
@@ -121,31 +130,35 @@ def execute():
         labels[subject] = obj_data[subject].get_labels()
 
         wrist_data_dict = obj_data[subject].get_wrist_data()
-        wrist_dict_length = {key: len(value) for key, value in wrist_data_dict.items()}
+        wrist_dict_length = {key: len(value)
+                             for key, value in wrist_data_dict.items()}
 
         chest_data_dict = obj_data[subject].get_chest_data()
-        chest_dict_length = {key: len(value) for key, value in chest_data_dict.items()}
+        chest_dict_length = {key: len(value)
+                             for key, value in chest_data_dict.items()}
         print(chest_dict_length)
         chest_data = np.concatenate((chest_data_dict['ACC'], chest_data_dict['ECG'], chest_data_dict['EDA'],
                                      chest_data_dict['EMG'], chest_data_dict['Resp'], chest_data_dict['Temp']), axis=1)
         # Get labels
-
 
         # 'ACC' : 3, 'ECG' 1: , 'EDA' : 1, 'EMG': 1, 'RESP': 1, 'Temp': 1  ===> Total dimensions : 8
         # No. of Labels ==> 8 ; 0 = not defined / transient, 1 = baseline, 2 = stress, 3 = amusement,
         # 4 = meditation, 5/6/7 = should be ignored in this dataset
 
         # Do for each subject
-        baseline = np.asarray([idx for idx, val in enumerate(labels[subject]) if val == 1])
+        baseline = np.asarray(
+            [idx for idx, val in enumerate(labels[subject]) if val == 1])
         # print("Baseline:", chest_data_dict['ECG'][baseline].shape)
         # print("Baseline")
         # print(baseline.shape)
 
-        stress = np.asarray([idx for idx, val in enumerate(labels[subject]) if val == 2])
+        stress = np.asarray(
+            [idx for idx, val in enumerate(labels[subject]) if val == 2])
         # print("Stress")
         # print(stress.shape)
 
-        amusement = np.asarray([idx for idx, val in enumerate(labels[subject]) if val == 3])
+        amusement = np.asarray(
+            [idx for idx, val in enumerate(labels[subject]) if val == 3])
         # print("Amusement")
         # print(amusement.shape)
 
@@ -169,6 +182,7 @@ def execute():
     print(data.shape)
     return data
 
+
 if __name__ == '__main__':
     execute()
     """
@@ -181,14 +195,14 @@ if __name__ == '__main__':
     """
     #x = [i for i in range(10000)]
     #plt.plot(x, chest_data_dict['ECG'][:10000])
-    #plt.show()
+    # plt.show()
 
     # BASELINE
 
     #                                    [ecg_features[k] for k in ecg_features.keys()])
 
     #ecg = nk.ecg_process(ecg=ecg_data, rsp=chest_data_dict['Resp'][baseline].flatten(), sampling_rate=700)
-    #print(os.getcwd())
+    # print(os.getcwd())
 
     """
     #recur_print
@@ -250,5 +264,4 @@ if __name__ == '__main__':
     print(bio["RSP"]["Cycles_Length"])
     """
     print("Read data file")
-    #Flow: Read data for all subjects -> Extract features (Preprocessing) -> Train the model
-
+    # Flow: Read data for all subjects -> Extract features (Preprocessing) -> Train the model
