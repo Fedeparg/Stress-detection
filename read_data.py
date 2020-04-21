@@ -5,6 +5,26 @@ import matplotlib.pyplot as plt
 import neurokit as nk
 import seaborn as sns
 import pandas as pd
+import csv
+
+
+# FUNCION PROPIA
+def load_stress_lvl(subj, label):
+    with open(subj + '_quest.csv', 'rt') as f:
+        rows = list(csv.reader(f, delimiter=';'))
+
+        if label == 1:  # Baseline
+            return rows[5][21]
+        elif label == 2:  # Stress
+            if str(rows[1][2]) == "TSST":
+                return rows[6][21]
+            else:
+                return rows[8][21]
+        elif label == 3: # Amusement
+            if str(rows[1][2]) == "Fun":
+                return rows[8][21]
+            else:
+                return rows[6][21]
 
 
 def load_data(path, subject):
@@ -99,10 +119,10 @@ def extract_one(chest_data_dict, idx, l_condition=0):
     # baseline_data = np.hstack((eda_features, temp_features, ecg_features, emg_features))
     baseline_data = np.column_stack((eda_data, ecg_data))
     # print(len(baseline_data))
-    label_array = np.full(len(baseline_data), l_condition)
+    # label_array = np.full(len(baseline_data), l_condition)
     # print(label_array.shape)
     # print(baseline_data.shape)
-    baseline_data = np.column_stack((baseline_data, label_array))
+    # baseline_data = np.column_stack((baseline_data, label_array))
     # print(baseline_data.shape)
     return baseline_data
 
@@ -121,17 +141,18 @@ def execute():
     obj_data = {}
     labels = {}
     all_data = {}
-    subs = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14]
-    # subs = [2, 3]
+    # subs = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14]
+    # subs = [15, 16, 17]
+    subs = [4]
     for i in subs:
         subject = 'S' + str(i)
         print("Reading data", subject)
         obj_data[subject] = read_data_one_subject(data_set_path, subject)
         labels[subject] = obj_data[subject].get_labels()
 
-        wrist_data_dict = obj_data[subject].get_wrist_data()
-        wrist_dict_length = {key: len(value)
-                             for key, value in wrist_data_dict.items()}
+        # wrist_data_dict = obj_data[subject].get_wrist_data()
+        # wrist_dict_length = {key: len(value)
+        #                      for key, value in wrist_data_dict.items()}
 
         chest_data_dict = obj_data[subject].get_chest_data()
         chest_dict_length = {key: len(value)
@@ -163,8 +184,17 @@ def execute():
         # print(amusement.shape)
 
         baseline_data = extract_one(chest_data_dict, baseline, l_condition=1)
+        strss_lvl = np.full_like(baseline, load_stress_lvl(subject, 1))
+        baseline_data = np.c_[baseline_data, strss_lvl]
+
         stress_data = extract_one(chest_data_dict, stress, l_condition=2)
+        strss_lvl = np.full_like(stress, load_stress_lvl(subject, 2))
+        stress_data = np.c_[stress_data, strss_lvl]
+
         amusement_data = extract_one(chest_data_dict, amusement, l_condition=3)
+        strss_lvl = np.full_like(amusement, load_stress_lvl(subject, 3))
+        amusement_data = np.c_[amusement_data, strss_lvl]
+        # np.full_like(len(baseline_data), load_stress_lvl(subject,1))
 
         full_data = np.vstack((baseline_data, stress_data, amusement_data))
         print("One subject data", full_data.shape)
