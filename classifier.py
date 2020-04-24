@@ -15,6 +15,8 @@ from ecgdetectors import Detectors
 from hrv import HRV
 from hrvanalysis import get_time_domain_features
 
+import feature_extraction
+
 # Numero de muestras por segundo
 mps = 700
 
@@ -65,6 +67,7 @@ if __name__ == '__main__':
     detector = Detectors(mps)
     hrv_class = HRV(mps)
     data = execute()
+    feature_extraction.extract_features(data)
     # print(data[:][:5])
     # X = data[:, :2]  # 16 features
     # y = data[:, 2]

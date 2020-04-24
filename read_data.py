@@ -6,10 +6,16 @@ import neurokit as nk
 import seaborn as sns
 import pandas as pd
 import csv
+import time
 
 
 # FUNCION PROPIA
 def load_stress_lvl(subj, label):
+    """
+    Abre el quests.csv propio del sujeto que se le pasa como parámetro y
+    obtiene el nivel de estrés reportado por el usuario para cada una de
+    las pruebas realizadas.
+    """
     with open(subj + '_quest.csv', 'rt') as f:
         rows = list(csv.reader(f, delimiter=';'))
 
@@ -20,11 +26,19 @@ def load_stress_lvl(subj, label):
                 return rows[6][21]
             else:
                 return rows[8][21]
-        elif label == 3: # Amusement
+        elif label == 3:  # Amusement
             if str(rows[1][2]) == "Fun":
-                return rows[8][21]
-            else:
                 return rows[6][21]
+            else:
+                return rows[8][21]
+
+
+# FUNCION PROPIA
+def split_in_seconds(data, sampling_rate, seconds):
+    rang = list(range(0, len(data), sampling_rate*seconds))
+    rang.pop(0)
+    splitted = np.vsplit(data, rang)
+    return splitted
 
 
 def load_data(path, subject):
@@ -143,7 +157,8 @@ def execute():
     all_data = {}
     # subs = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14]
     # subs = [15, 16, 17]
-    subs = [4]
+    subs = [2]
+
     for i in subs:
         subject = 'S' + str(i)
         print("Reading data", subject)
@@ -157,7 +172,7 @@ def execute():
         chest_data_dict = obj_data[subject].get_chest_data()
         chest_dict_length = {key: len(value)
                              for key, value in chest_data_dict.items()}
-        print(chest_dict_length)
+        # print(chest_dict_length)
         chest_data = np.concatenate((chest_data_dict['ACC'], chest_data_dict['ECG'], chest_data_dict['EDA'],
                                      chest_data_dict['EMG'], chest_data_dict['Resp'], chest_data_dict['Temp']), axis=1)
         # Get labels
@@ -166,39 +181,47 @@ def execute():
         # No. of Labels ==> 8 ; 0 = not defined / transient, 1 = baseline, 2 = stress, 3 = amusement,
         # 4 = meditation, 5/6/7 = should be ignored in this dataset
 
+        
         # Do for each subject
         baseline = np.asarray(
             [idx for idx, val in enumerate(labels[subject]) if val == 1])
         # print("Baseline:", chest_data_dict['ECG'][baseline].shape)
         # print("Baseline")
-        # print(baseline.shape)
+        print(baseline)
 
         stress = np.asarray(
             [idx for idx, val in enumerate(labels[subject]) if val == 2])
         # print("Stress")
-        # print(stress.shape)
+        print(stress.shape)
 
         amusement = np.asarray(
             [idx for idx, val in enumerate(labels[subject]) if val == 3])
         # print("Amusement")
-        # print(amusement.shape)
+        print(amusement.shape)
 
+        start = time.time()
         baseline_data = extract_one(chest_data_dict, baseline, l_condition=1)
-        strss_lvl = np.full_like(baseline, load_stress_lvl(subject, 1))
-        baseline_data = np.c_[baseline_data, strss_lvl]
+        stress_baseline = load_stress_lvl(subject, 1)
+        print(stress_baseline)
+        strss_lvl = np.full((len(baseline), 1), stress_baseline)
+        baseline_data = np.hstack((baseline_data, strss_lvl))
 
         stress_data = extract_one(chest_data_dict, stress, l_condition=2)
-        strss_lvl = np.full_like(stress, load_stress_lvl(subject, 2))
-        stress_data = np.c_[stress_data, strss_lvl]
+        stress_stress = load_stress_lvl(subject, 2)
+        print(stress_stress)
+        strss_lvl = np.full((len(stress), 1), stress_stress)
+        stress_data = np.hstack((stress_data, strss_lvl))
 
         amusement_data = extract_one(chest_data_dict, amusement, l_condition=3)
-        strss_lvl = np.full_like(amusement, load_stress_lvl(subject, 3))
-        amusement_data = np.c_[amusement_data, strss_lvl]
-        # np.full_like(len(baseline_data), load_stress_lvl(subject,1))
+        stress_amusement = load_stress_lvl(subject, 3)
+        print(stress_amusement)
+        strss_lvl = np.full((len(amusement), 1), stress_amusement)
+        amusement_data = np.hstack((amusement_data, strss_lvl))
 
         full_data = np.vstack((baseline_data, stress_data, amusement_data))
         print("One subject data", full_data.shape)
         all_data[subject] = full_data
+    print(time.time()-start)
 
     i = 0
     for k, v in all_data.items():
@@ -209,7 +232,7 @@ def execute():
         else:
             data = np.vstack((data, all_data[k]))
 
-    print(data.shape)
+    print(f"La forma de los datos que devuelvo es: {data.shape}")
     return data
 
 
