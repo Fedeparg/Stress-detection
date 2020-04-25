@@ -195,19 +195,17 @@ def read_threaded(subject, data_set_path, ind, all_data):
 
     baseline_data = extract_one(chest_data_dict, baseline, l_condition=1)
     stress_baseline = load_stress_lvl(data_set_path, subject, 1)
-    # strss_lvl = np.full((len(baseline), 1), stress_baseline)
-    # baseline_data = np.hstack((baseline_data, strss_lvl))
-    strss_lvl = np.full_like(baseline, load_stress_lvl(data_set_path, subject, 1))
+    strss_lvl = np.full_like(baseline, stress_baseline)
     baseline_data = np.c_[baseline_data, strss_lvl]
 
     stress_data = extract_one(chest_data_dict, stress, l_condition=2)
     stress_stress = load_stress_lvl(data_set_path, subject, 2)
-    strss_lvl = np.full_like(stress, load_stress_lvl(data_set_path,subject, 2))
+    strss_lvl = np.full_like(stress,stress_stress)
     stress_data = np.c_[stress_data, strss_lvl]
 
     amusement_data = extract_one(chest_data_dict, amusement, l_condition=3)
     stress_amusement = load_stress_lvl(data_set_path, subject, 3)
-    strss_lvl = np.full_like(amusement, load_stress_lvl(data_set_path, subject, 3))
+    strss_lvl = np.full_like(amusement, stress_amusement)
     amusement_data = np.c_[amusement_data, strss_lvl]
 
     full_data = np.vstack((baseline_data, stress_data, amusement_data))
@@ -224,7 +222,7 @@ def execute():
     obj_data = {}
     labels = {}
     # subs = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14]
-    subs = [2,3,4,5,6,7]
+    subs = [2]
     all_data = manager.list([[]]*len(subs))
     print(all_data)
     # subs = [15, 16, 17]
