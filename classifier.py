@@ -67,7 +67,7 @@ if __name__ == '__main__':
     detector = Detectors(mps)
     hrv_class = HRV(mps)
     data = execute()
-    feature_extraction.extract_features(data)
+    # feature_extraction.extract_features(data)
     # print(data[:][:5])
     # X = data[:, :2]  # 16 features
     # y = data[:, 2]
