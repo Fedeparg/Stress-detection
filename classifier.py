@@ -67,6 +67,7 @@ if __name__ == '__main__':
     detector = Detectors(mps)
     hrv_class = HRV(mps)
     data = execute()
+    print(data.shape)
     # feature_extraction.extract_features(data)
     # print(data[:][:5])
     # X = data[:, :2]  # 16 features
@@ -76,7 +77,7 @@ if __name__ == '__main__':
     # r_peaks son los puntos temporales en los que se detecta un latido
     # r_peaks = detector.pan_tompkins_detector(ecg)
     # hr es el ritmo cardiaco calculado mediante los r_peaks
-    processed_data = process_data(data)
+    # processed_data = process_data(data)
 """
     # -------------------
     # Tal vez pueda pasarle fragmentos para que calcule la variabilidad

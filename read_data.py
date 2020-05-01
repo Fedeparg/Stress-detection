@@ -9,6 +9,7 @@ import csv
 import time
 from multiprocessing import Process, Manager
 import logging
+import feature_extraction as fe
 
 
 # FUNCION PROPIA
@@ -162,11 +163,10 @@ def read_threaded(subject, data_set_path, ind, all_data):
     #                      for key, value in wrist_data_dict.items()}
 
     chest_data_dict = subject_data.get_chest_data()
-    chest_dict_length = {key: len(value)
-                         for key, value in chest_data_dict.items()}
+    del subject_data
+    #chest_dict_length = {key: len(value)for key, value in chest_data_dict.items()}
     # print(chest_dict_length)
-    chest_data = np.concatenate((chest_data_dict['ACC'], chest_data_dict['ECG'], chest_data_dict['EDA'],
-                                 chest_data_dict['EMG'], chest_data_dict['Resp'], chest_data_dict['Temp']), axis=1)
+    #chest_data = np.concatenate((chest_data_dict['ACC'], chest_data_dict['ECG'], chest_data_dict['EDA'],chest_data_dict['EMG'], chest_data_dict['Resp'], chest_data_dict['Temp']), axis=1)
     # Get labels
     # 'ACC' : 3, 'ECG' 1: , 'EDA' : 1, 'EMG': 1, 'RESP': 1, 'Temp': 1  ===> Total dimensions : 8
     # No. of Labels ==> 8 ; 0 = not defined / transient, 1 = baseline, 2 = stress, 3 = amusement,
@@ -195,17 +195,20 @@ def read_threaded(subject, data_set_path, ind, all_data):
 
     baseline_data = extract_one(chest_data_dict, baseline, l_condition=1)
     stress_baseline = load_stress_lvl(data_set_path, subject, 1)
-    strss_lvl = np.full_like(baseline, stress_baseline)
+    baseline_data = fe.extract_features(baseline_data, 700)
+    strss_lvl = np.full((len(baseline_data), 1), stress_baseline)
     baseline_data = np.c_[baseline_data, strss_lvl]
 
     stress_data = extract_one(chest_data_dict, stress, l_condition=2)
     stress_stress = load_stress_lvl(data_set_path, subject, 2)
-    strss_lvl = np.full_like(stress,stress_stress)
+    stress_data = fe.extract_features(stress_data, 700)
+    strss_lvl = np.full((len(stress_data), 1), stress_stress)
     stress_data = np.c_[stress_data, strss_lvl]
 
     amusement_data = extract_one(chest_data_dict, amusement, l_condition=3)
     stress_amusement = load_stress_lvl(data_set_path, subject, 3)
-    strss_lvl = np.full_like(amusement, stress_amusement)
+    amusement_data = fe.extract_features(amusement_data, 700)
+    strss_lvl = np.full((len(amusement_data), 1), stress_amusement)
     amusement_data = np.c_[amusement_data, strss_lvl]
 
     full_data = np.vstack((baseline_data, stress_data, amusement_data))
@@ -221,8 +224,8 @@ def execute():
     subject = 'S3'
     obj_data = {}
     labels = {}
-    # subs = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14]
-    subs = [2]
+    subs = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14]
+    # subs = [2]
     all_data = manager.list([[]]*len(subs))
     print(all_data)
     # subs = [15, 16, 17]
@@ -233,7 +236,7 @@ def execute():
         os.chdir(data_set_path)
         subject = 'S' + str(i)
         os.chdir(subject)
-        logging.info("Main    : create and start thread %d.", ind)
+        logging.info("Main    : create and start thread %d.", i)
         x = Process(target=read_threaded, args=(
             subject, data_set_path, ind, all_data))
         x.start()
