@@ -66,8 +66,24 @@ def load_dataset(ds_path):
 if __name__ == '__main__':
     detector = Detectors(mps)
     hrv_class = HRV(mps)
-    data = execute()
+    data, names = execute()
     print(data.shape)
+    print(names)
+    # Meter en diccionario
+    dataset_full = {
+        'data': data,
+        'names': names
+    }
+    with open('dataset1.pickle', 'wb') as output:
+        pickle.dump(dataset_full, output)
+        output.close()
+    # with open('dataset1.pickle', 'rb') as data:
+    #     dataset = pickle.load(data)
+    # print("Mostrando del fichero leido")
+    # print(dataset["names"])
+    # print(dataset["data"])
+
+
     # feature_extraction.extract_features(data)
     # print(data[:][:5])
     # X = data[:, :2]  # 16 features
@@ -79,11 +95,6 @@ if __name__ == '__main__':
     # hr es el ritmo cardiaco calculado mediante los r_peaks
     # processed_data = process_data(data)
 """
-    # -------------------
-    # Tal vez pueda pasarle fragmentos para que calcule la variabilidad
-    # test = hrv_class.RMSSD(r_peaks[2:5])
-    # -------------------
-
     # plt.figure()
     # plt.plot(ecg)
     # # plt.plot(r_peaks)

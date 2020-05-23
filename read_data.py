@@ -151,7 +151,7 @@ def recur_print(ecg):
             recur_print(ecg[k])
 
 
-def read_threaded(subject, data_set_path, ind, all_data):
+def read_threaded(subject, data_set_path, ind, all_data, names):
     print("Reading data", subject)
     # obj_data[subject] = read_data_one_subject(data_set_path, subject)
     # labels[subject] = obj_data[subject].get_labels()
@@ -195,38 +195,41 @@ def read_threaded(subject, data_set_path, ind, all_data):
 
     baseline_data = extract_one(chest_data_dict, baseline, l_condition=1)
     stress_baseline = load_stress_lvl(data_set_path, subject, 1)
-    baseline_data = fe.extract_features(baseline_data, 700)
+    baseline_data, names_d = fe.extract_features(baseline_data, 700)
     strss_lvl = np.full((len(baseline_data), 1), stress_baseline)
     baseline_data = np.c_[baseline_data, strss_lvl]
 
     stress_data = extract_one(chest_data_dict, stress, l_condition=2)
     stress_stress = load_stress_lvl(data_set_path, subject, 2)
-    stress_data = fe.extract_features(stress_data, 700)
+    stress_data, _ = fe.extract_features(stress_data, 700)
     strss_lvl = np.full((len(stress_data), 1), stress_stress)
     stress_data = np.c_[stress_data, strss_lvl]
 
     amusement_data = extract_one(chest_data_dict, amusement, l_condition=3)
     stress_amusement = load_stress_lvl(data_set_path, subject, 3)
-    amusement_data = fe.extract_features(amusement_data, 700)
+    amusement_data, _ = fe.extract_features(amusement_data, 700)
     strss_lvl = np.full((len(amusement_data), 1), stress_amusement)
     amusement_data = np.c_[amusement_data, strss_lvl]
 
     full_data = np.vstack((baseline_data, stress_data, amusement_data))
     print("One subject data", full_data.shape)
-
+    print(f'Names {names_d}')
     all_data[ind] = full_data
+    names[0] = names_d
 
 
 def execute():
     manager = Manager()
     data_set_path = "/home/fedeparg/Stress-detection/WESAD"
+    original_path = "/home/fedeparg/Stress-detection/"
     file_path = "ecg.txt"
     subject = 'S3'
     obj_data = {}
     labels = {}
-    subs = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14]
-    # subs = [2]
+    subs = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17]
+    # subs = [4]
     all_data = manager.list([[]]*len(subs))
+    names = manager.list('a')
     print(all_data)
     # subs = [15, 16, 17]
 
@@ -238,13 +241,14 @@ def execute():
         os.chdir(subject)
         logging.info("Main    : create and start thread %d.", i)
         x = Process(target=read_threaded, args=(
-            subject, data_set_path, ind, all_data))
+            subject, data_set_path, ind, all_data, names))
         x.start()
         threads.append(x)
 
     for t in threads:
         t.join()
 
+    os.chdir(original_path)
     print(time.time()-start)
 
     i = 0
@@ -255,9 +259,11 @@ def execute():
             i += 1
         else:
             data = np.vstack((data, all_data[k]))
+    names_final = names[0]
 
     print(f"La forma de los datos que devuelvo es: {data.shape}")
-    return data
+    print(f'Los nombres de los datos son: {names_final}')
+    return data, names_final
 
 
 if __name__ == '__main__':

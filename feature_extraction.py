@@ -42,20 +42,22 @@ def extract_features(data, sampling_rate):
 
     splitted = split_in_seconds(data, sampling_rate, 60)
     seccion = None
+    names = None
     for idx, m in enumerate(splitted):
         print(f'Procesando split {idx} con longitud {len(m)}')
 
-        eda = eda_processing(m[:, 0])
         try:
-            ecg = ecg_processing(m[:, 1], detector, hrv_class)
+            ecg, names_ecg = ecg_processing(m[:, 1], detector, hrv_class)
+            eda, names_eda = eda_processing(m[:, 0])
             full_iteration = np.hstack((eda, ecg))
             if seccion is None:
                 seccion = np.empty((0, len(full_iteration)))
+                names = names_eda + names_ecg + ["stress_lvl"]
             seccion = np.vstack((seccion, full_iteration))
         except Exception:
+            print("Error en un dato. Continuando...")
             continue
-
-    return seccion
+    return seccion, names
 
 
 def split_in_seconds(data, sampling_rate, seconds):
@@ -120,7 +122,9 @@ def ecg_processing(ecg_signal, detector, hrv_class):
     # CONCATENARLO TODO EN UN SUPER ARRAY (HORIZONTAL)
     ecg = np.hstack((mean, median, std, skewness, kurtosis, rmssd, sdsd, sdrr_rmssd,
                      pNN50, pNN20, SD1, SD2, rel_rr, vlf_power, lf_power, hf_power, lf_hf))
-    return ecg
+    names = ['mean_ecg', 'median_ecg', 'std_ecg', 'skewness_ecg', 'kurtosis_ecg', 'rmssd_ecg', 'sdsd_ecg', 'sdrr_rmssd_ecg', 'pNN50_ecg', 'pNN20_ecg', 'SD1_ecg', 'SD2_ecg',
+             'rel_rr_mean_ecg', 'rel_rr_median_ecg', 'rel_rr_std_ecg', 'rel_rr_skewness_ecg', 'rel_rr_kurtosis_ecg', 'vlf_power_ecg', 'lf_power_ecg', 'hf_power_ecg', 'lf_hf_ecg']
+    return ecg, names
 
 
 def relative_rr(intervals):
@@ -192,7 +196,10 @@ def eda_processing(eda_signal):
 
     eda = np.hstack((mean_scr, max_scr, min_scr, skewness, kurtosis, mean_der1, std_der1, mean_der2,
                      std_der2, mean_peaks, max_peaks, min_peaks, alsc_result, insc_result, apsc_result, rmsc_result))
-    return eda
+
+    names = ['mean_scr_eda', 'max_scr_eda', 'min_scr_eda', 'skewness_eda', 'kurtosis_eda', 'mean_der1_eda', 'std_der1_eda', 'mean_der2_eda',
+             'std_der2_eda', 'mean_peaks_eda', 'max_peaks_eda', 'min_peaks_eda', 'alsc_result_eda', 'insc_result_eda', 'apsc_result_eda', 'rmsc_result_eda']
+    return eda, names
 
 
 def alsc(scr):
