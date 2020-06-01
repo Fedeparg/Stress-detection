@@ -74,11 +74,11 @@ if __name__ == '__main__':
         'data': data,
         'names': names
     }
-    with open('dataset1.pickle', 'wb') as output:
+    with open('dataset2.pickle', 'wb') as output:
         pickle.dump(dataset_full, output)
         output.close()
-    # with open('dataset1.pickle', 'rb') as data:
-    #     dataset = pickle.load(data)
+    with open('dataset2.pickle', 'rb') as data:
+        dataset = pickle.load(data)
     # print("Mostrando del fichero leido")
     # print(dataset["names"])
     # print(dataset["data"])

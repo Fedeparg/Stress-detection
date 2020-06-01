@@ -40,7 +40,7 @@ def extract_features(data, sampling_rate):
     # Unir horizontalmente ecg y eda
     # unir verticalmente cada iteracion
 
-    splitted = split_in_seconds(data, sampling_rate, 60)
+    splitted = split_in_seconds(data, sampling_rate, 30)
     seccion = None
     names = None
     for idx, m in enumerate(splitted):
