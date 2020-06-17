@@ -1,0 +1,6 @@
+,Wins,Losses,Ties,Wins-Losses
+mlp,1,0,3,1
+rf,1,0,3,1
+dt,0,0,4,0
+sv,0,0,4,0
+kn,0,2,2,-2
